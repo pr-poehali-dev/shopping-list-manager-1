@@ -192,26 +192,27 @@ const Index = () => {
   const totalQuantity = completedProducts.reduce((sum, p) => sum + (p.quantity || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen bg-white">
+      <header className="bg-black border-b sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Icon name="Package" className="text-white" size={24} />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Учет товаров</h1>
-          </div>
-          
-          <div className="flex gap-4 text-sm">
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg">
-              <Icon name="ShoppingBag" size={16} className="text-primary" />
-              <span className="font-semibold text-gray-900">{totalQuantity}</span>
-              <span className="text-gray-600">товаров</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
-              <Icon name="DollarSign" size={16} className="text-green-600" />
-              <span className="font-semibold text-gray-900">{totalPurchases.toFixed(2)}</span>
-              <span className="text-gray-600">₽</span>
+          <div className="flex flex-col items-center gap-4">
+            <img 
+              src="https://cdn.poehali.dev/files/c48fea69-8c0f-473f-b693-c87f0be768fc.png" 
+              alt="CARFIX" 
+              className="h-12 object-contain"
+            />
+            
+            <div className="flex gap-4 text-sm">
+              <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-lg">
+                <Icon name="ShoppingBag" size={16} className="text-primary" />
+                <span className="font-semibold text-black">{totalQuantity}</span>
+                <span className="text-gray-600">товаров</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+                <Icon name="DollarSign" size={16} className="text-black" />
+                <span className="font-semibold text-black">{totalPurchases.toFixed(2)}</span>
+                <span className="text-gray-600">₽</span>
+              </div>
             </div>
           </div>
         </div>
@@ -226,69 +227,53 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="shopping-list" className="space-y-4">
-            <Card className="p-4">
-              <h3 className="font-semibold mb-4">Добавить товар</h3>
-              
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Фото товара</Label>
+            <Card className="p-3 border-2 border-black">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-10 w-10 p-0 border-2 border-black">
+                      <Icon name="Camera" size={18} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Фото товара</DialogTitle>
+                    </DialogHeader>
                     <Input type="file" accept="image/*" onChange={handleImageUpload} />
                     {imagePreview && (
-                      <div className="mt-2 space-y-2">
-                        <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded" />
+                      <div className="space-y-2">
+                        <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded" />
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={confirmImage} className="flex-1">
-                            <Icon name="Check" size={16} />
+                          <Button onClick={confirmImage} className="flex-1">
+                            <Icon name="Check" size={16} className="mr-2" />
+                            Подтвердить
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={cancelImage} className="flex-1">
-                            <Icon name="X" size={16} />
+                          <Button variant="outline" onClick={cancelImage} className="flex-1">
+                            <Icon name="X" size={16} className="mr-2" />
+                            Отменить
                           </Button>
                         </div>
                       </div>
                     )}
-                  </div>
-                  
-                  <div>
-                    <Label>Подсказка</Label>
-                    <Textarea 
-                      placeholder="Где найти товар..."
-                      value={newProduct.hint || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, hint: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                </div>
+                  </DialogContent>
+                </Dialog>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Название товара</Label>
-                    <Input 
-                      placeholder="Введите название"
-                      value={newProduct.name || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Артикул</Label>
-                    <Input 
-                      placeholder="1234567"
-                      value={newProduct.article || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, article: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label>Контрагент</Label>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-10 w-10 p-0 border-2 border-black">
+                      <Icon name="Users" size={18} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Выбрать контрагента</DialogTitle>
+                    </DialogHeader>
                     <Select 
                       value={newProduct.supplierId} 
                       onValueChange={(value) => setNewProduct({ ...newProduct, supplierId: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Выбрать" />
+                        <SelectValue placeholder="Выбрать контрагента" />
                       </SelectTrigger>
                       <SelectContent>
                         {suppliers.map(s => (
@@ -296,44 +281,72 @@ const Index = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </DialogContent>
+                </Dialog>
 
-                  <div>
-                    <Label>Цена продажи</Label>
-                    <Input 
-                      type="number" 
-                      placeholder="0.00"
-                      value={newProduct.salePrice || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, salePrice: parseFloat(e.target.value) })}
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-10 w-10 p-0 border-2 border-black">
+                      <Icon name="Info" size={18} />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Подсказка</DialogTitle>
+                    </DialogHeader>
+                    <Textarea 
+                      placeholder="Где найти товар..."
+                      value={newProduct.hint || ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, hint: e.target.value })}
+                      rows={4}
                     />
-                  </div>
+                  </DialogContent>
+                </Dialog>
 
-                  <div>
-                    <Label>Количество</Label>
-                    <Input 
-                      type="number" 
-                      placeholder="1"
-                      value={newProduct.quantity || 1}
-                      onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) })}
-                    />
-                  </div>
-                </div>
+                <Input 
+                  placeholder="Название товара"
+                  value={newProduct.name || ''}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                  className="flex-1 min-w-[150px] h-10 border-2 border-black"
+                />
+                
+                <Input 
+                  placeholder="Артикул"
+                  value={newProduct.article || ''}
+                  onChange={(e) => setNewProduct({ ...newProduct, article: e.target.value })}
+                  className="w-28 h-10 border-2 border-black"
+                />
 
-                <Button onClick={addProduct} className="w-full">
-                  <Icon name="Plus" size={16} className="mr-2" />
-                  Добавить товар
+                <Input 
+                  type="number" 
+                  placeholder="Цена продажи"
+                  value={newProduct.salePrice || ''}
+                  onChange={(e) => setNewProduct({ ...newProduct, salePrice: parseFloat(e.target.value) })}
+                  className="w-28 h-10 border-2 border-black"
+                />
+
+                <Input 
+                  type="number" 
+                  placeholder="Кол-во"
+                  value={newProduct.quantity || 1}
+                  onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) })}
+                  className="w-20 h-10 border-2 border-black"
+                />
+
+                <Button onClick={addProduct} size="sm" className="h-10 bg-primary hover:bg-primary/90">
+                  <Icon name="Plus" size={16} />
                 </Button>
               </div>
             </Card>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {products.map((product) => (
-                <Card key={product.id} className="p-4">
-                  <div className="flex items-start gap-3">
+                <Card key={product.id} className="p-2 border-2 border-gray-200 hover:border-primary transition-colors">
+                  <div className="flex items-center gap-2">
                     {product.image ? (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-16 w-16 p-0">
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover rounded" />
                           </Button>
                         </DialogTrigger>
@@ -342,74 +355,65 @@ const Index = () => {
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="h-16 w-16 bg-gray-100 rounded flex items-center justify-center">
-                        <Icon name="ImageOff" size={24} className="text-gray-400" />
+                      <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                        <Icon name="ImageOff" size={16} className="text-gray-400" />
                       </div>
                     )}
 
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-semibold">{product.name}</h4>
-                          <p className="text-sm text-gray-600">Артикул: {product.article}</p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => deleteProduct(product.id)}>
-                            <Icon name="X" size={16} />
+                    {product.supplierId && (
+                      <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                        <Icon name="Users" size={16} className="text-gray-600" />
+                      </div>
+                    )}
+
+                    {product.hint && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                            <Icon name="Info" size={16} className="text-gray-600" />
                           </Button>
-                        </div>
-                      </div>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Подсказка</DialogTitle>
+                          </DialogHeader>
+                          <p>{product.hint}</p>
+                        </DialogContent>
+                      </Dialog>
+                    )}
 
-                      {product.hint && (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Icon name="Info" size={14} className="mr-1" />
-                              Подсказка
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Где найти товар</DialogTitle>
-                            </DialogHeader>
-                            <p>{product.hint}</p>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Цена покупки</Label>
-                          <div className="flex gap-1">
-                            <Input 
-                              type="number"
-                              placeholder="0.00"
-                              value={product.purchasePrice || ''}
-                              onChange={(e) => updateProduct(product.id, { purchasePrice: parseFloat(e.target.value) })}
-                              className="h-9"
-                            />
-                            <Button 
-                              size="sm" 
-                              variant={product.purchasePrice ? "default" : "outline"}
-                              onClick={() => completeProduct(product.id)}
-                              className="h-9 px-2"
-                            >
-                              <Icon name="Check" size={14} />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Количество</Label>
-                          <Input 
-                            type="number"
-                            value={product.quantity || 1}
-                            onChange={(e) => updateProduct(product.id, { quantity: parseInt(e.target.value) })}
-                            className="h-9"
-                          />
-                        </div>
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm truncate">{product.name}</div>
+                      <div className="text-xs text-gray-600">#{product.article}</div>
                     </div>
+
+                    <Input 
+                      type="number"
+                      placeholder="Цена покупки"
+                      value={product.purchasePrice || ''}
+                      onChange={(e) => updateProduct(product.id, { purchasePrice: parseFloat(e.target.value) })}
+                      className="w-28 h-9 text-sm"
+                    />
+
+                    <Input 
+                      type="number"
+                      value={product.quantity || 1}
+                      onChange={(e) => updateProduct(product.id, { quantity: parseInt(e.target.value) })}
+                      className="w-16 h-9 text-sm"
+                    />
+
+                    <Button 
+                      size="sm" 
+                      variant={product.isCompleted ? "default" : "outline"}
+                      onClick={() => completeProduct(product.id)}
+                      className="h-9 w-9 p-0"
+                    >
+                      <Icon name="Check" size={14} />
+                    </Button>
+
+                    <Button variant="ghost" size="sm" onClick={() => deleteProduct(product.id)} className="h-9 w-9 p-0">
+                      <Icon name="Trash2" size={14} />
+                    </Button>
                   </div>
                 </Card>
               ))}
