@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -38,6 +38,8 @@ interface Supplier {
   }>;
 }
 
+const API_URL = 'https://functions.poehali.dev/1ea1449d-3d3d-49d9-b758-12480f736941';
+
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [completedProducts, setCompletedProducts] = useState<Product[]>([]);
@@ -45,6 +47,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'name'>('date');
   const [filterDate, setFilterDate] = useState('');
+  const [loading, setLoading] = useState(true);
   
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
@@ -56,45 +59,130 @@ const Index = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [newSupplierName, setNewSupplierName] = useState('');
 
-  const addProduct = () => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [productsRes, suppliersRes] = await Promise.all([
+        fetch(`${API_URL}?action=get_products`),
+        fetch(`${API_URL}?action=get_suppliers`)
+      ]);
+      
+      const productsData = await productsRes.json();
+      const suppliersData = await suppliersRes.json();
+      
+      const loadedProducts = productsData.products.map((p: any) => ({
+        id: p.id.toString(),
+        name: p.name,
+        article: p.article,
+        image: p.image_url,
+        hint: p.hint,
+        salePrice: p.sale_price,
+        purchasePrice: p.purchase_price,
+        quantity: p.quantity,
+        supplierId: p.supplier_id?.toString(),
+        dateAdded: new Date(p.date_added),
+        isCompleted: p.is_completed
+      }));
+      
+      const loadedSuppliers = suppliersData.suppliers.map((s: any) => ({
+        id: s.id.toString(),
+        name: s.name,
+        totalDebt: s.total_debt,
+        products: []
+      }));
+      
+      setProducts(loadedProducts.filter((p: Product) => !p.isCompleted));
+      setCompletedProducts(loadedProducts.filter((p: Product) => p.isCompleted));
+      setSuppliers(loadedSuppliers);
+    } catch (error) {
+      toast.error('Ошибка загрузки данных');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addProduct = async () => {
     if (!newProduct.name || !newProduct.article) {
       toast.error('Укажите название и артикул товара');
       return;
     }
-    const product: Product = {
-      id: Date.now().toString(),
-      name: newProduct.name,
-      article: newProduct.article,
-      image: newProduct.image,
-      hint: newProduct.hint,
-      quantity: newProduct.quantity || 1,
-      supplierId: newProduct.supplierId,
-      dateAdded: new Date(),
-      isCompleted: false,
-    };
-    setProducts([...products, product]);
-    setNewProduct({ name: '', article: '', hint: '', quantity: 1 });
-    setImagePreview('');
-    toast.success('Товар добавлен в список');
+    
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_product',
+          name: newProduct.name,
+          article: newProduct.article,
+          image_url: newProduct.image,
+          hint: newProduct.hint,
+          sale_price: newProduct.salePrice,
+          quantity: newProduct.quantity || 1,
+          supplier_id: newProduct.supplierId ? parseInt(newProduct.supplierId) : null
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        await loadData();
+        setNewProduct({ name: '', article: '', hint: '', quantity: 1 });
+        setImagePreview('');
+        toast.success('Товар добавлен');
+      }
+    } catch (error) {
+      toast.error('Ошибка добавления товара');
+      console.error(error);
+    }
   };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
+  const updateProduct = async (id: string, updates: Partial<Product>) => {
+    try {
+      await fetch(API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: parseInt(id),
+          purchase_price: updates.purchasePrice,
+          quantity: updates.quantity,
+          is_completed: updates.isCompleted
+        })
+      });
+      
+      setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
+    } catch (error) {
+      toast.error('Ошибка обновления');
+      console.error(error);
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    toast.success('Товар удален');
+  const deleteProduct = async (id: string) => {
+    try {
+      await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
+      setProducts(products.filter(p => p.id !== id));
+      toast.success('Товар удален');
+    } catch (error) {
+      toast.error('Ошибка удаления');
+      console.error(error);
+    }
   };
 
-  const completeProduct = (id: string) => {
+  const completeProduct = async (id: string) => {
     const product = products.find(p => p.id === id);
     if (!product) return;
     if (!product.purchasePrice || !product.quantity) {
       toast.error('Укажите цену покупки и количество');
       return;
     }
-    updateProduct(id, { isCompleted: true });
+    await updateProduct(id, { isCompleted: true });
+    await loadData();
+    toast.success('Товар завершен');
   };
 
   const sendToDatabase = () => {
@@ -127,20 +215,34 @@ const Index = () => {
     toast.success(`${completed.length} товаров отправлено в базу`);
   };
 
-  const addSupplier = () => {
+  const addSupplier = async () => {
     if (!newSupplierName.trim()) {
       toast.error('Укажите название контрагента');
       return;
     }
-    const supplier: Supplier = {
-      id: Date.now().toString(),
-      name: newSupplierName,
-      totalDebt: 0,
-      products: [],
-    };
-    setSuppliers([...suppliers, supplier]);
-    setNewSupplierName('');
-    toast.success('Контрагент добавлен');
+    
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_supplier',
+          name: newSupplierName,
+          total_debt: 0
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        await loadData();
+        setNewSupplierName('');
+        toast.success('Контрагент добавлен');
+      }
+    } catch (error) {
+      toast.error('Ошибка добавления контрагента');
+      console.error(error);
+    }
   };
 
   const deleteSupplier = (id: string) => {
